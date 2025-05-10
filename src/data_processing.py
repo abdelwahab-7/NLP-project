@@ -17,9 +17,9 @@ def load_and_process_data():
     
     # Define files to process
     data_files = {
-        "train.tsv": "train_data.csv",
-        "dev.tsv": "dev_data.csv",
-        "test.tsv": "test_data.csv"
+        "train.tsv": "train.tsv",
+        "dev.tsv": "dev.tsv",
+        "test.tsv": "test.tsv"
     }
     
     # Sampling percentage (e.g., 10%)
@@ -42,7 +42,8 @@ def load_and_process_data():
         
         # Skip header if present (assuming first line is header)
         if lines:
-            data_lines = lines[1:]  # Skip the header
+            header = lines[0]
+            data_lines = lines[1:]
         else:
             print(f"No data in {input_file}!")
             continue
@@ -51,14 +52,11 @@ def load_and_process_data():
         sample_size = max(1, int(len(data_lines) * sample_percentage))
         sampled_lines = random.sample(data_lines, sample_size)
         
-        # Save sampled data as CSV (convert tabs to commas)
+        # Save sampled data as TSV (preserve tabs)
         with open(output_path, 'w', encoding='utf-8') as f:
-            # Write header, replacing tabs with commas
-            header = lines[0].strip().replace('\t', ',')
-            f.write(header + "\n")
-            # Write sampled data, replacing tabs with commas
+            f.write(header.strip() + "\n")
             for line in sampled_lines:
-                f.write(line.strip().replace('\t', ',') + "\n")
+                f.write(line.strip() + "\n")
         
         print(f"Saved {sample_size} sampled rows to {output_path}")
 
