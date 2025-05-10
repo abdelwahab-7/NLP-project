@@ -1,5 +1,5 @@
-# src/data_processing.py
 import os
+import random
 
 def load_and_process_data():
     raw_data_path = "../data/raw/"
@@ -15,29 +15,52 @@ def load_and_process_data():
         os.makedirs(processed_data_path)
         print("Created processed data folder.")
     
-    # List to store combined data
-    combined_data = []
+    # Define files to process
+    data_files = {
+        "train.tsv": "train_data.csv",
+        "dev.tsv": "dev_data.csv",
+        "test.tsv": "test_data.csv"
+    }
     
-    # Process CSV and TSV files
-    for file in os.listdir(raw_data_path):
-        if file.endswith((".csv", ".tsv")):
-            file_path = os.path.join(raw_data_path, file)
-            print(f"Processing raw data file: {file}")
-            
-            # Read the file (basic line-by-line reading)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                for line in lines:
-                    combined_data.append(line.strip())
+    # Sampling percentage (e.g., 10%)
+    sample_percentage = 0.1
     
-    # Save combined data to a single processed file
-    if combined_data:
-        output_file = os.path.join(processed_data_path, "processed_data.txt")
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write("\n".join(combined_data))
-        print(f"Saved processed data to {output_file}")
-    else:
-        print("No data to process.")
+    # Process each file
+    for input_file, output_file in data_files.items():
+        input_path = os.path.join(raw_data_path, input_file)
+        output_path = os.path.join(processed_data_path, output_file)
+        
+        if not os.path.exists(input_path):
+            print(f"File {input_file} not found in raw data!")
+            continue
+        
+        print(f"Processing {input_file}...")
+        
+        # Read all lines
+        with open(input_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        # Skip header if present (assuming first line is header)
+        if lines:
+            data_lines = lines[1:]  # Skip the header
+        else:
+            print(f"No data in {input_file}!")
+            continue
+        
+        # Sample a subset of the data
+        sample_size = max(1, int(len(data_lines) * sample_percentage))
+        sampled_lines = random.sample(data_lines, sample_size)
+        
+        # Save sampled data as CSV (convert tabs to commas)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            # Write header, replacing tabs with commas
+            header = lines[0].strip().replace('\t', ',')
+            f.write(header + "\n")
+            # Write sampled data, replacing tabs with commas
+            for line in sampled_lines:
+                f.write(line.strip().replace('\t', ',') + "\n")
+        
+        print(f"Saved {sample_size} sampled rows to {output_path}")
 
 if __name__ == "__main__":
     print("Running data processing...")
