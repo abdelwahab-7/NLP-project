@@ -1,8 +1,9 @@
 import os
 import random
+import pandas as pd
 
 def load_and_process_data():
-    raw_data_path = "../data/raw/"
+    raw_data_path = "../data/raw/full_dataset/"
     processed_data_path = "../data/processed/"
     
     # Check if raw data folder exists
@@ -15,50 +16,42 @@ def load_and_process_data():
         os.makedirs(processed_data_path)
         print("Created processed data folder.")
     
-    # Define files to process
-    data_files = {
-        "train.tsv": "train.tsv",
-        "dev.tsv": "dev.tsv",
-        "test.tsv": "test.tsv"
-    }
+    # Define the input file
+    input_file = "goemotions_1.csv"
+    input_path = os.path.join(raw_data_path, input_file)
     
-    # Sampling percentage (e.g., 10%)
-    sample_percentage = 0.1
+    # Check if the input file exists
+    if not os.path.exists(input_path):
+        print(f"File {input_file} not found in raw data!")
+        return
     
-    # Process each file
-    for input_file, output_file in data_files.items():
-        input_path = os.path.join(raw_data_path, input_file)
-        output_path = os.path.join(processed_data_path, output_file)
-        
-        if not os.path.exists(input_path):
-            print(f"File {input_file} not found in raw data!")
-            continue
-        
-        print(f"Processing {input_file}...")
-        
-        # Read all lines
-        with open(input_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        
-        # Skip header if present (assuming first line is header)
-        if lines:
-            header = lines[0]
-            data_lines = lines[1:]
-        else:
-            print(f"No data in {input_file}!")
-            continue
-        
-        # Sample a subset of the data
-        sample_size = max(1, int(len(data_lines) * sample_percentage))
-        sampled_lines = random.sample(data_lines, sample_size)
-        
-        # Save sampled data as TSV (preserve tabs)
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(header.strip() + "\n")
-            for line in sampled_lines:
-                f.write(line.strip() + "\n")
-        
-        print(f"Saved {sample_size} sampled rows to {output_path}")
+    print(f"Processing {input_file}...")
+    
+    # Read the CSV file using pandas
+    df = pd.read_csv(input_path)
+    
+    # Shuffle the data
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+    
+    # Calculate split sizes
+    total_rows = len(df)
+    train_size = int(total_rows * 0.8)  # 80% for train
+    test_size = total_rows - train_size  # 20% for test
+    
+    # Split the data
+    train_df = df[:train_size]
+    test_df = df[train_size:]
+    
+    # Define output paths
+    train_output_path = os.path.join(processed_data_path, "train.csv")
+    test_output_path = os.path.join(processed_data_path, "test.csv")
+    
+    # Save the splits as CSV files
+    train_df.to_csv(train_output_path, index=False)
+    test_df.to_csv(test_output_path, index=False)
+    
+    print(f"Saved {train_size} rows to {train_output_path}")
+    print(f"Saved {test_size} rows to {test_output_path}")
 
 if __name__ == "__main__":
     print("Running data processing...")
